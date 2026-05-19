@@ -22,12 +22,24 @@ const errorHandler = require("./middlewares/error.middleware");
 const app = express();
 
 app.use(helmet());
+
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [
+        "https://mediumseagreen-penguin-371115.hostingersite.com",
+        process.env.FRONTEND_URL,
+      ].filter(Boolean)
+    : ["http://localhost:5173", "http://localhost:3000"];
+
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL
-        : ["http://localhost:5173", "http://localhost:3000"],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow all in case of misconfigured origin
+      }
+    },
     credentials: true,
   }),
 );
@@ -36,7 +48,7 @@ const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max:
     process.env.NODE_ENV === "production"
-      ? parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100
+      ? parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 500
       : 1000,
   message: {
     success: false,
