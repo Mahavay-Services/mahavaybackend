@@ -7,6 +7,7 @@ const {
   AUDIT_ACTIONS,
   VERIFICATION_STATUS,
   BOOKING_STAGES,
+  ROLES,
 } = require("../config/constants");
 const path = require("path");
 const fs = require("fs");
@@ -17,6 +18,12 @@ exports.getPayments = async (req, res, next) => {
     const pagination = paginate(page, limit);
 
     const where = {};
+    const bookingWhere = {};
+
+    // Sales users can only see payments for their own bookings (BDM1 or BDM2)
+    if (req.user.role === ROLES.SALES) {
+      bookingWhere[Op.or] = [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }];
+    }
 
     if (booking_id) where.booking_id = booking_id;
     if (status) where.verification_status = status;
@@ -32,7 +39,16 @@ exports.getPayments = async (req, res, next) => {
       include: [
         {
           association: "booking",
-          attributes: ["id", "booking_number", "client_name"],
+          attributes: [
+            "id",
+            "booking_number",
+            "client_name",
+            "bdm_id",
+            "bdm2_id",
+          ],
+          where:
+            Object.keys(bookingWhere).length > 0 ? bookingWhere : undefined,
+          required: Object.keys(bookingWhere).length > 0,
         },
         { association: "creator", attributes: ["id", "full_name"] },
         { association: "verifier", attributes: ["id", "full_name"] },
@@ -65,12 +81,29 @@ exports.getPayments = async (req, res, next) => {
 
 exports.getPendingPayments = async (req, res, next) => {
   try {
+    const bookingWhere = {};
+
+    // Sales users can only see pending payments for their own bookings
+    if (req.user.role === ROLES.SALES) {
+      bookingWhere[Op.or] = [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }];
+    }
+
     const payments = await BookingPayment.findAll({
       where: { verification_status: VERIFICATION_STATUS.PENDING },
       include: [
         {
           association: "booking",
-          attributes: ["id", "booking_number", "client_name", "total_amount"],
+          attributes: [
+            "id",
+            "booking_number",
+            "client_name",
+            "total_amount",
+            "bdm_id",
+            "bdm2_id",
+          ],
+          where:
+            Object.keys(bookingWhere).length > 0 ? bookingWhere : undefined,
+          required: Object.keys(bookingWhere).length > 0,
         },
         { association: "creator", attributes: ["id", "full_name"] },
         {
@@ -446,6 +479,8 @@ exports.getPaymentDetails = async (req, res, next) => {
             "client_name",
             "total_amount",
             "pending_amount",
+            "bdm_id",
+            "bdm2_id",
           ],
         },
         { association: "creator", attributes: ["id", "full_name"] },
@@ -464,6 +499,17 @@ exports.getPaymentDetails = async (req, res, next) => {
         success: false,
         message: "Payment not found",
       });
+    }
+
+    // Sales users can only view payments for their own bookings
+    if (req.user.role === ROLES.SALES) {
+      const booking = payment.booking;
+      if (booking.bdm_id !== req.user.id && booking.bdm2_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied - not your booking",
+        });
+      }
     }
 
     res.json({
