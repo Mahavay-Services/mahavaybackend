@@ -18,12 +18,7 @@ exports.getPayments = async (req, res, next) => {
     const pagination = paginate(page, limit);
 
     const where = {};
-    const bookingWhere = {};
-
-    // Sales users can only see payments for their own bookings (BDM1 or BDM2)
-    if (req.user.role === ROLES.SALES) {
-      bookingWhere[Op.or] = [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }];
-    }
+    const isSales = req.user.role === ROLES.SALES;
 
     if (booking_id) where.booking_id = booking_id;
     if (status) where.verification_status = status;
@@ -46,9 +41,10 @@ exports.getPayments = async (req, res, next) => {
             "bdm_id",
             "bdm2_id",
           ],
-          where:
-            Object.keys(bookingWhere).length > 0 ? bookingWhere : undefined,
-          required: Object.keys(bookingWhere).length > 0,
+          where: isSales
+            ? { [Op.or]: [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }] }
+            : undefined,
+          required: isSales,
         },
         { association: "creator", attributes: ["id", "full_name"] },
         { association: "verifier", attributes: ["id", "full_name"] },
@@ -81,12 +77,7 @@ exports.getPayments = async (req, res, next) => {
 
 exports.getPendingPayments = async (req, res, next) => {
   try {
-    const bookingWhere = {};
-
-    // Sales users can only see pending payments for their own bookings
-    if (req.user.role === ROLES.SALES) {
-      bookingWhere[Op.or] = [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }];
-    }
+    const isSales = req.user.role === ROLES.SALES;
 
     const payments = await BookingPayment.findAll({
       where: { verification_status: VERIFICATION_STATUS.PENDING },
@@ -101,9 +92,10 @@ exports.getPendingPayments = async (req, res, next) => {
             "bdm_id",
             "bdm2_id",
           ],
-          where:
-            Object.keys(bookingWhere).length > 0 ? bookingWhere : undefined,
-          required: Object.keys(bookingWhere).length > 0,
+          where: isSales
+            ? { [Op.or]: [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }] }
+            : undefined,
+          required: isSales,
         },
         { association: "creator", attributes: ["id", "full_name"] },
         {
