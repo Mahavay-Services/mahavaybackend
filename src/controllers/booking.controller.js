@@ -56,7 +56,10 @@ exports.getBookings = async (req, res, next) => {
 
     const where = {};
 
-    // Sales can view all bookings (removed restriction)
+    // Sales can only view their own bookings (BDM1 or BDM2)
+    if (req.user.role === ROLES.SALES) {
+      where[Op.or] = [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }];
+    }
 
     if (search) {
       where[Op.and] = where[Op.and] || [];
@@ -197,6 +200,16 @@ exports.getBooking = async (req, res, next) => {
       });
     }
 
+    // Sales users can only view their own bookings
+    if (req.user.role === ROLES.SALES) {
+      if (booking.bdm_id !== req.user.id && booking.bdm2_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied - not your booking",
+        });
+      }
+    }
+
     res.json({
       success: true,
       data: booking,
@@ -249,6 +262,16 @@ exports.updateBooking = async (req, res, next) => {
       });
     }
 
+    // Sales users can only update their own bookings
+    if (req.user.role === ROLES.SALES) {
+      if (booking.bdm_id !== req.user.id && booking.bdm2_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied - not your booking",
+        });
+      }
+    }
+
     const oldValues = booking.toJSON();
     await booking.update(req.body);
 
@@ -290,6 +313,16 @@ exports.updateBookingServices = async (req, res, next) => {
         success: false,
         message: "Booking not found",
       });
+    }
+
+    // Sales users can only update their own bookings
+    if (req.user.role === ROLES.SALES) {
+      if (booking.bdm_id !== req.user.id && booking.bdm2_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied - not your booking",
+        });
+      }
     }
 
     await BookingService.destroy({ where: { booking_id: bookingId } });
@@ -463,6 +496,16 @@ exports.deleteBooking = async (req, res, next) => {
         success: false,
         message: "Booking not found",
       });
+    }
+
+    // Sales users can only delete their own bookings
+    if (req.user.role === ROLES.SALES) {
+      if (booking.bdm_id !== req.user.id && booking.bdm2_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied - not your booking",
+        });
+      }
     }
 
     for (const payment of booking.payments || []) {

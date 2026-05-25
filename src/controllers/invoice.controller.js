@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 const { Invoice, User, Service } = require("../models");
 const { paginate } = require("../utils/helpers");
 const { createAuditLog } = require("../services/audit.service");
-const { AUDIT_ACTIONS } = require("../config/constants");
+const { AUDIT_ACTIONS, ROLES } = require("../config/constants");
 
 const generateInvoiceNumber = async (type) => {
   const year = new Date().getFullYear();
@@ -25,6 +25,11 @@ exports.getInvoices = async (req, res, next) => {
     const pagination = paginate(page, limit);
 
     const where = {};
+
+    // Sales users can only view their own invoices
+    if (req.user.role === ROLES.SALES) {
+      where.created_by = req.user.id;
+    }
 
     if (invoice_type && invoice_type !== "") where.invoice_type = invoice_type;
     if (status && status !== "") where.status = status;
@@ -72,6 +77,13 @@ exports.getInvoice = async (req, res, next) => {
       return res
         .status(404)
         .json({ success: false, message: "Invoice not found" });
+    }
+
+    // Sales users can only view their own invoices
+    if (req.user.role === ROLES.SALES && invoice.created_by !== req.user.id) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied - not your invoice" });
     }
 
     const data = invoice.toJSON();
@@ -128,6 +140,13 @@ exports.updateInvoice = async (req, res, next) => {
         .json({ success: false, message: "Invoice not found" });
     }
 
+    // Sales users can only update their own invoices
+    if (req.user.role === ROLES.SALES && invoice.created_by !== req.user.id) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied - not your invoice" });
+    }
+
     await invoice.update(req.body);
 
     res.json({ success: true, data: invoice });
@@ -143,6 +162,13 @@ exports.deleteInvoice = async (req, res, next) => {
       return res
         .status(404)
         .json({ success: false, message: "Invoice not found" });
+    }
+
+    // Sales users can only delete their own invoices
+    if (req.user.role === ROLES.SALES && invoice.created_by !== req.user.id) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied - not your invoice" });
     }
 
     await invoice.destroy();

@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 const { Quotation, User, Service } = require("../models");
 const { paginate } = require("../utils/helpers");
 const { createAuditLog } = require("../services/audit.service");
-const { AUDIT_ACTIONS } = require("../config/constants");
+const { AUDIT_ACTIONS, ROLES } = require("../config/constants");
 
 const generateQuotationNumber = async () => {
   const year = new Date().getFullYear();
@@ -26,7 +26,7 @@ exports.getQuotations = async (req, res, next) => {
 
     const where = {};
 
-    if (req.user.role === "sales") {
+    if (req.user.role === ROLES.SALES) {
       where.created_by = req.user.id;
     }
 
@@ -75,6 +75,16 @@ exports.getQuotation = async (req, res, next) => {
       return res
         .status(404)
         .json({ success: false, message: "Quotation not found" });
+    }
+
+    // Sales users can only view their own quotations
+    if (req.user.role === ROLES.SALES && quotation.created_by !== req.user.id) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Access denied - not your quotation",
+        });
     }
 
     const data = quotation.toJSON();
@@ -130,6 +140,16 @@ exports.updateQuotation = async (req, res, next) => {
         .json({ success: false, message: "Quotation not found" });
     }
 
+    // Sales users can only update their own quotations
+    if (req.user.role === ROLES.SALES && quotation.created_by !== req.user.id) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Access denied - not your quotation",
+        });
+    }
+
     await quotation.update(req.body);
 
     res.json({ success: true, data: quotation });
@@ -145,6 +165,16 @@ exports.deleteQuotation = async (req, res, next) => {
       return res
         .status(404)
         .json({ success: false, message: "Quotation not found" });
+    }
+
+    // Sales users can only delete their own quotations
+    if (req.user.role === ROLES.SALES && quotation.created_by !== req.user.id) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Access denied - not your quotation",
+        });
     }
 
     await quotation.destroy();
