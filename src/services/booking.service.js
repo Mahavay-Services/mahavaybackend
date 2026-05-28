@@ -32,8 +32,10 @@ const createBooking = async (
     const bookingNumber = await generateBookingNumber(Booking);
 
     const totals = calculateBookingTotals(servicesData);
-    const receivedAmount = parseFloat(bookingData.received_amount) || 0;
+    const initialPaymentAmount = parseFloat(bookingData.received_amount) || 0;
 
+    // received_amount starts at 0 - only verified payments count
+    // pending_amount = total until payments are verified
     const booking = await Booking.create(
       {
         booking_number: bookingNumber,
@@ -41,12 +43,12 @@ const createBooking = async (
         subtotal_amount: totals.subtotal_amount,
         gst_amount: totals.gst_amount,
         total_amount: totals.total_amount,
-        received_amount: receivedAmount,
-        pending_amount: totals.total_amount - receivedAmount,
+        received_amount: 0,
+        pending_amount: totals.total_amount,
         booking_date:
           bookingData.booking_date || new Date().toISOString().split("T")[0],
         current_stage:
-          receivedAmount > 0
+          initialPaymentAmount > 0
             ? BOOKING_STAGES.ACCOUNTS_VERIFICATION_PENDING
             : BOOKING_STAGES.SALES_CREATED,
         created_by: req.user.id,
@@ -94,17 +96,17 @@ const createBooking = async (
       );
     }
 
-    if (receivedAmount > 0) {
+    if (initialPaymentAmount > 0) {
       const payment = await BookingPayment.create(
         {
           booking_id: booking.id,
           payment_date: new Date(),
           payment_mode: bookingData.payment_mode || "upi",
           payment_type: "initial",
-          base_amount: receivedAmount,
+          base_amount: initialPaymentAmount,
           gst_amount: 0,
-          total_amount: receivedAmount,
-          received_amount: receivedAmount,
+          total_amount: initialPaymentAmount,
+          received_amount: initialPaymentAmount,
           verification_status: VERIFICATION_STATUS.PENDING,
           remarks: "Initial payment during booking creation",
           created_by: req.user.id,
@@ -129,7 +131,7 @@ const createBooking = async (
     }
 
     const initialStage =
-      receivedAmount > 0
+      initialPaymentAmount > 0
         ? BOOKING_STAGES.ACCOUNTS_VERIFICATION_PENDING
         : BOOKING_STAGES.SALES_CREATED;
 
@@ -140,7 +142,7 @@ const createBooking = async (
         to_stage: initialStage,
         changed_by: req.user.id,
         reason:
-          receivedAmount > 0
+          initialPaymentAmount > 0
             ? "Booking created with initial payment"
             : "Booking created",
       },
@@ -156,9 +158,9 @@ const createBooking = async (
       newValue: {
         booking_number: bookingNumber,
         total_amount: totals.total_amount,
-        received_amount: receivedAmount,
+        initial_payment: initialPaymentAmount,
       },
-      description: `Booking ${bookingNumber} created${receivedAmount > 0 ? " with initial payment of ₹" + receivedAmount : ""}`,
+      description: `Booking ${bookingNumber} created${initialPaymentAmount > 0 ? " with initial payment of ₹" + initialPaymentAmount + " (pending verification)" : ""}`,
     });
 
     return booking;

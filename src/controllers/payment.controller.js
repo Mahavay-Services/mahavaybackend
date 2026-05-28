@@ -307,12 +307,26 @@ exports.verifyPayment = async (req, res, next) => {
 
     if (verification_status === VERIFICATION_STATUS.VERIFIED) {
       const booking = payment.booking;
-      const newReceivedAmount =
-        parseFloat(booking.received_amount) + verifiedAmt;
+
+      // Recalculate received_amount from all verified payments to prevent double-counting
+      const verifiedPayments = await BookingPayment.findAll({
+        where: {
+          booking_id: booking.id,
+          verification_status: VERIFICATION_STATUS.VERIFIED,
+        },
+        attributes: ["verified_amount", "received_amount"],
+      });
+
+      // Sum up all verified payments (use verified_amount if available, else received_amount)
+      const totalReceived = verifiedPayments.reduce((sum, p) => {
+        const amt =
+          parseFloat(p.verified_amount) || parseFloat(p.received_amount) || 0;
+        return sum + amt;
+      }, 0);
 
       await booking.update({
-        received_amount: newReceivedAmount,
-        pending_amount: parseFloat(booking.total_amount) - newReceivedAmount,
+        received_amount: totalReceived,
+        pending_amount: parseFloat(booking.total_amount) - totalReceived,
         accounts_verified: true,
         current_stage: BOOKING_STAGES.ACCOUNTS_VERIFIED,
       });
