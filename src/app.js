@@ -21,6 +21,11 @@ const errorHandler = require("./middlewares/error.middleware");
 
 const app = express();
 
+// Trust proxy when running behind Hostinger/nginx
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", true);
+}
+
 app.use(helmet());
 
 const allowedOrigins =
