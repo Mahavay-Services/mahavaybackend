@@ -28,6 +28,15 @@ if (process.env.NODE_ENV === "production") {
 
 app.use(helmet());
 
+// Prevent CDN/proxy from caching or serving truncated API responses
+app.use("/api", (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  next();
+});
+
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
