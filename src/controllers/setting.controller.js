@@ -3,7 +3,7 @@ const { Setting } = require("../models");
 const DEFAULT_SETTINGS = {
   crm_name: "Mahavay CRM",
   crm_tagline: "Enterprise Management",
-  primary_color: "#16a34a",
+  primary_color: "#000080",
   accent_color: "#d97706",
   quotation_logo_url: "/Mahavaylogo.png",
   quotation_company_name: "MAHAVAY SERVICES PRIVATE LIMITED",
