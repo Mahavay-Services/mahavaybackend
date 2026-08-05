@@ -1,12 +1,12 @@
 const { Setting } = require("../models");
 
 const DEFAULT_SETTINGS = {
-  crm_name: "SATYA CRM",
+  crm_name: "Mahavay CRM",
   crm_tagline: "Enterprise Management",
   primary_color: "#16a34a",
   accent_color: "#d97706",
-  quotation_logo_url: "/logo.svg",
-  quotation_company_name: "SATYA CRM Pvt Ltd",
+  quotation_logo_url: "/Mahavaylogo.png",
+  quotation_company_name: "MAHAVAY SERVICES PRIVATE LIMITED",
   quotation_company_tagline: "Enterprise Solutions",
   quotation_show_signature: "true",
   quotation_signature_label: "Authorized Signatory",

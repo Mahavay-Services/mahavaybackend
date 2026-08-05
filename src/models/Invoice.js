@@ -30,7 +30,7 @@ module.exports = (sequelize) => {
       // Seller details
       seller_name: {
         type: DataTypes.STRING(200),
-        defaultValue: "Satya Sankalp Services Private Limited",
+        defaultValue: "MAHAVAY SERVICES PRIVATE LIMITED",
       },
       seller_address: {
         type: DataTypes.TEXT,
@@ -149,7 +149,7 @@ module.exports = (sequelize) => {
       // Bank details
       bank_holder_name: {
         type: DataTypes.STRING(200),
-        defaultValue: "Satya Sankalp Services Private Limited",
+        defaultValue: "MAHAVAY SERVICES PRIVATE LIMITED",
       },
       bank_name: {
         type: DataTypes.STRING(100),
