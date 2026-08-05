@@ -48,10 +48,7 @@ app.use("/api", (req, res, next) => {
 
 const allowedOrigins =
   process.env.NODE_ENV === "production"
-    ? [
-        "https://mediumseagreen-penguin-371115.hostingersite.com",
-        process.env.FRONTEND_URL,
-      ].filter(Boolean)
+    ? [process.env.FRONTEND_URL].filter(Boolean)
     : ["http://localhost:5173", "http://localhost:3000"];
 
 app.use(
@@ -100,7 +97,7 @@ app.use("/api/invoices", invoiceRoutes);
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
-    message: "CRM API is running",
+    message: "Mahavay CRM API is running",
     timestamp: new Date().toISOString(),
   });
 });

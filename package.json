@@ -1,7 +1,7 @@
 {
-  "name": "crm-backend",
+  "name": "startup-support-crm-backend",
   "version": "1.0.0",
-  "description": "Production CRM/ERP Backend System",
+  "description": "Mahavay CRM — Startup Support CRM Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

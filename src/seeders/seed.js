@@ -15,7 +15,7 @@ const seedDatabase = async () => {
     const users = await User.bulkCreate([
       {
         full_name: 'Super Admin',
-        email: 'admin@satyacrm.com',
+        email: 'admin@mahavaycrm.com',
         phone: '9999999999',
         password_hash: adminPassword,
         role: 'super_admin',
@@ -27,7 +27,7 @@ const seedDatabase = async () => {
       },
       {
         full_name: 'Rahul Sharma',
-        email: 'rahul@satyacrm.com',
+        email: 'rahul@mahavaycrm.com',
         phone: '9876543210',
         password_hash: adminPassword,
         role: 'sales',
@@ -39,7 +39,7 @@ const seedDatabase = async () => {
       },
       {
         full_name: 'Priya Singh',
-        email: 'priya@satyacrm.com',
+        email: 'priya@mahavaycrm.com',
         phone: '9876543211',
         password_hash: adminPassword,
         role: 'sales',
@@ -51,7 +51,7 @@ const seedDatabase = async () => {
       },
       {
         full_name: 'Amit Kumar',
-        email: 'amit@satyacrm.com',
+        email: 'amit@mahavaycrm.com',
         phone: '9876543212',
         password_hash: adminPassword,
         role: 'accounts',
@@ -63,7 +63,7 @@ const seedDatabase = async () => {
       },
       {
         full_name: 'Neha Gupta',
-        email: 'neha@satyacrm.com',
+        email: 'neha@mahavaycrm.com',
         phone: '9876543213',
         password_hash: adminPassword,
         role: 'legal',
@@ -75,7 +75,7 @@ const seedDatabase = async () => {
       },
       {
         full_name: 'Vikram Patel',
-        email: 'vikram@satyacrm.com',
+        email: 'vikram@mahavaycrm.com',
         phone: '9876543214',
         password_hash: adminPassword,
         role: 'ops_manager',
@@ -87,7 +87,7 @@ const seedDatabase = async () => {
       },
       {
         full_name: 'Sanjay Verma',
-        email: 'sanjay@satyacrm.com',
+        email: 'sanjay@mahavaycrm.com',
         phone: '9876543215',
         password_hash: adminPassword,
         role: 'ops_member',
@@ -216,7 +216,7 @@ const seedDatabase = async () => {
 
     console.log('\n✓ Database seeded successfully!');
     console.log('\nDefault Login Credentials:');
-    console.log('Email: admin@satyacrm.com');
+    console.log('Email: admin@mahavaycrm.com');
     console.log('Password: Admin@123');
     console.log('\nAll users have password: Admin@123');
 
