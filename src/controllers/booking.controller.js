@@ -61,6 +61,17 @@ exports.getBookings = async (req, res, next) => {
       where[Op.or] = [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }];
     }
 
+    // Ops members can only view bookings where they are assigned
+    if (req.user.role === ROLES.OPS_MEMBER) {
+      const assignedBookingIds = await BookingService.findAll({
+        where: { assigned_ops_user_id: req.user.id },
+        attributes: ["booking_id"],
+        raw: true,
+      });
+      const ids = assignedBookingIds.map((b) => b.booking_id);
+      where.id = { [Op.in]: ids.length > 0 ? ids : [0] };
+    }
+
     if (search) {
       where[Op.and] = where[Op.and] || [];
       where[Op.and].push({
@@ -210,9 +221,29 @@ exports.getBooking = async (req, res, next) => {
       }
     }
 
+    // Ops members can only view bookings they are assigned to
+    if (req.user.role === ROLES.OPS_MEMBER) {
+      const isAssigned = booking.bookingServices?.some(
+        (bs) => bs.assigned_ops_user_id === req.user.id,
+      );
+      if (!isAssigned) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied - not assigned to this booking",
+        });
+      }
+    }
+
+    const data = booking.toJSON();
+
+    // Hide payment screenshots from ops_member
+    if (req.user.role === ROLES.OPS_MEMBER && data.payments) {
+      data.payments = data.payments.map((p) => ({ ...p, screenshots: [] }));
+    }
+
     res.json({
       success: true,
-      data: booking,
+      data,
     });
   } catch (error) {
     next(error);
@@ -444,6 +475,16 @@ exports.getBookingStats = async (req, res, next) => {
 
     if (req.user.role === ROLES.SALES) {
       where[Op.or] = [{ bdm_id: req.user.id }, { bdm2_id: req.user.id }];
+    }
+
+    if (req.user.role === ROLES.OPS_MEMBER) {
+      const assignedBookingIds = await BookingService.findAll({
+        where: { assigned_ops_user_id: req.user.id },
+        attributes: ["booking_id"],
+        raw: true,
+      });
+      const ids = assignedBookingIds.map((b) => b.booking_id);
+      where.id = { [Op.in]: ids.length > 0 ? ids : [0] };
     }
 
     const stats = await Booking.findAll({
